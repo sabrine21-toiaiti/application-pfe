@@ -1,0 +1,13 @@
+# .NET
+SebnWeb/bin/
+SebnWeb/obj/
+SebnWeb/Data/*.json
+
+# Python
+ia-service/venv/
+ia-service/__pycache__/
+ia-service/*.py[cod]
+
+# OS / editor
+.DS_Store
+.vscode/
