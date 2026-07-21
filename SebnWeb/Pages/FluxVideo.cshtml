@@ -12,13 +12,14 @@
 @if (!Model.ApiDisponible)
 {
     <div class="alert alert-warning">
-        ⚠️ Le service IA peut mettre 30 à 60 secondes à se réveiller après une période d’inactivité (plan gratuit Render).
-        Veuillez patienter quelques instants avant de réessayer.
+        ⚠️ Le microservice IA (<code>ia-service</code>) n'est pas accessible actuellement.
+        Si l'application vient de démarrer (plan gratuit), le service met parfois
+        30 à 60 secondes à se réveiller — réessayez dans une minute.
     </div>
 }
 else
 {
-    <span class="badge badge-warning mb-3">MODE SIMULATION — connecté au microservice IA</span>
+    <span class="badge badge-warning pulse mb-3">MODE SIMULATION — connecté au microservice IA</span>
 }
 
 <div class="row">
