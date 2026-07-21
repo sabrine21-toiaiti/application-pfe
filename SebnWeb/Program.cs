@@ -24,7 +24,7 @@ builder.Services.AddHttpClient<DetectionApiClient>(client =>
 {
     var baseUrl = builder.Configuration["DetectionApi:BaseUrl"] ?? "http://localhost:8000";
     client.BaseAddress = new Uri(baseUrl);
-    client.Timeout = TimeSpan.FromSeconds(5);
+    client.Timeout = TimeSpan.FromSeconds(60);
 });
 
 var app = builder.Build();

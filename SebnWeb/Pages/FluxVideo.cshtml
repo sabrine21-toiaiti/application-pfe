@@ -12,8 +12,8 @@
 @if (!Model.ApiDisponible)
 {
     <div class="alert alert-warning">
-        ⚠️ Le microservice IA Python (<code>ia-service</code>) n'est pas accessible sur <code>http://localhost:8000</code>.
-        Lancez-le avec : <code>uvicorn main:app --port 8000</code>
+        ⚠️ Le service IA peut mettre 30 à 60 secondes à se réveiller après une période d’inactivité (plan gratuit Render).
+        Veuillez patienter quelques instants avant de réessayer.
     </div>
 }
 else
