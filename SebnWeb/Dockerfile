@@ -12,6 +12,7 @@ COPY --from=build /app/publish .
 # Render fournit le port via la variable d'environnement PORT (lue dans Program.cs).
 # Valeur par défaut si non fournie (ex: test local du conteneur).
 ENV PORT=8080
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true
 EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "SebnWeb.dll"]
