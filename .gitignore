@@ -7,6 +7,7 @@ SebnWeb/Data/*.json
 ia-service/venv/
 ia-service/__pycache__/
 ia-service/*.py[cod]
+ia-service/data/
 
 # OS / editor
 .DS_Store
