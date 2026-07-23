@@ -4,13 +4,14 @@ consommée par le backend .NET.
 
 Lancer : uvicorn main:app --port 8000 --reload
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 from detection import get_module_detection, modele_reel_disponible
 import base64
 import io
+from PIL import Image
 
 app = FastAPI(title="SEBN - Microservice de Détection IA")
 
@@ -46,6 +47,29 @@ def detect():
 
     buffer = io.BytesIO()
     img.save(buffer, format="PNG")
+    image_b64 = base64.b64encode(buffer.getvalue()).decode()
+
+    anomalie = None
+    if resultat:
+        anomalie = AnomalieDetectee(
+            type_anomalie=resultat["type_anomalie"],
+            classe=resultat["classe"],
+            confiance=resultat["confiance"],
+        )
+
+    return ResultatDetection(image_base64=image_b64, anomalie=anomalie)
+
+
+@app.post("/detect-image", response_model=ResultatDetection)
+async def detect_image(file: UploadFile = File(...)):
+    """Analyse une photo envoyée par le navigateur (caméra PC ou téléphone)."""
+    contenu = await file.read()
+    img = Image.open(io.BytesIO(contenu))
+
+    img_annotee, resultat = detecteur.analyser_image_fournie(img)
+
+    buffer = io.BytesIO()
+    img_annotee.save(buffer, format="JPEG", quality=85)
     image_b64 = base64.b64encode(buffer.getvalue()).decode()
 
     anomalie = None

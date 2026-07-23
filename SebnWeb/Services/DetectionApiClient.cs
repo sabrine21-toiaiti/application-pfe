@@ -51,4 +51,23 @@ public class DetectionApiClient
             return null;
         }
     }
+
+    public async Task<ResultatDetectionDto?> DetecterImageAsync(byte[] imageBytes, string nomFichier = "photo.jpg")
+    {
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            using var imageContent = new ByteArrayContent(imageBytes);
+            imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+            content.Add(imageContent, "file", nomFichier);
+
+            var rep = await _http.PostAsync("/detect-image", content);
+            if (!rep.IsSuccessStatusCode) return null;
+            return await rep.Content.ReadFromJsonAsync<ResultatDetectionDto>();
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }

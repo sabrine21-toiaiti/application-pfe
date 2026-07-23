@@ -65,3 +65,100 @@ else
         }
     </div>
 </div>
+
+<hr class="my-4" />
+
+<div class="sebn-header">
+    <div>
+        <div style="font-size:20px; font-weight:700; color:var(--navy-dark);">📱 Caméra de cet appareil</div>
+        <div style="font-size:13px; color:#6b6b70;">Fonctionne sur PC (webcam) et téléphone (caméra arrière/avant) — capture réelle envoyée à l'IA</div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="sebn-kpi text-center">
+            <video id="camVideo" autoplay playsinline style="width:100%; border-radius:10px; display:none;"></video>
+            <canvas id="camCanvas" style="display:none;"></canvas>
+            <img id="camResultImg" class="img-fluid rounded" style="display:none;" />
+            <div id="camPlaceholder" class="text-muted py-5">Cliquez sur « Activer la caméra » pour commencer.</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="sebn-kpi mb-3">
+            <button id="btnActiverCam" class="btn btn-sebn w-100 mb-2">🎥 Activer la caméra</button>
+            <button id="btnCapturerCam" class="btn btn-outline-primary w-100" disabled>📸 Capturer et analyser</button>
+        </div>
+        <div id="camAlerte"></div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const video = document.getElementById('camVideo');
+    const canvas = document.getElementById('camCanvas');
+    const resultImg = document.getElementById('camResultImg');
+    const placeholder = document.getElementById('camPlaceholder');
+    const btnActiver = document.getElementById('btnActiverCam');
+    const btnCapturer = document.getElementById('btnCapturerCam');
+    const alerteZone = document.getElementById('camAlerte');
+    let stream = null;
+
+    btnActiver.addEventListener('click', async () => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
+            });
+            video.srcObject = stream;
+            video.style.display = 'block';
+            resultImg.style.display = 'none';
+            placeholder.style.display = 'none';
+            btnCapturer.disabled = false;
+        } catch (err) {
+            alerteZone.innerHTML = '<div class="alert alert-danger">Impossible d\'accéder à la caméra : ' + err.message + '</div>';
+        }
+    });
+
+    btnCapturer.addEventListener('click', async () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const imageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+        btnCapturer.disabled = true;
+        btnCapturer.textContent = '⏳ Analyse en cours...';
+
+        try {
+            const idPoste = document.querySelector('select[name="IdPoste"]')?.value || 'P01';
+            const rep = await fetch('/api/detect-photo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageBase64: imageBase64, idPoste: idPoste })
+            });
+            const data = await rep.json();
+
+            if (data.erreur) {
+                alerteZone.innerHTML = '<div class="alert alert-warning">' + data.erreur + '</div>';
+            } else {
+                resultImg.src = 'data:image/jpeg;base64,' + data.imageBase64;
+                resultImg.style.display = 'block';
+                video.style.display = 'none';
+
+                if (data.anomalie) {
+                    alerteZone.innerHTML = '<div class="alert alert-danger"><strong>⚠️ ' +
+                        data.anomalie.type + ' détecté</strong><br>Classe : <code>' +
+                        data.anomalie.classe + '</code><br>Confiance : ' +
+                        Math.round(data.anomalie.confiance * 100) + '%</div>';
+                } else {
+                    alerteZone.innerHTML = '<div class="alert alert-success">✅ Poste conforme</div>';
+                }
+            }
+        } catch (err) {
+            alerteZone.innerHTML = '<div class="alert alert-danger">Erreur réseau : ' + err.message + '</div>';
+        }
+
+        btnCapturer.disabled = false;
+        btnCapturer.textContent = '📸 Capturer et analyser';
+    });
+})();
+</script>

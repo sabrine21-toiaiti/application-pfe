@@ -63,6 +63,17 @@ class ModuleDetectionSimulation:
         img = Image.new("RGB", (self.largeur, self.hauteur), (235, 236, 240))
         draw = ImageDraw.Draw(img)
         self._dessiner_poste(draw)
+        return self._analyser_et_annoter(img, draw)
+
+    def analyser_image_fournie(self, img: Image.Image):
+        """Analyse une photo réelle fournie (caméra du navigateur, PC ou téléphone).
+        Simule une détection réaliste superposée sur la vraie photo."""
+        img = img.convert("RGB").copy()
+        draw = ImageDraw.Draw(img)
+        return self._analyser_et_annoter(img, draw, dessiner_fond=False)
+
+    def _analyser_et_annoter(self, img, draw, dessiner_fond=True):
+        largeur, hauteur = img.size
 
         anomalie_detectee = random.random() < self.probabilite_anomalie
 
@@ -74,13 +85,14 @@ class ModuleDetectionSimulation:
             confiance = round(random.uniform(0.65, 0.97), 2)
             couleur = COULEURS[type_anomalie]
 
-            # Boîte englobante simulée autour d'une zone aléatoire
-            bx = random.choice([110, 250, 390])
-            by = random.choice([100, 260])
-            draw.rectangle([bx - 8, by - 8, bx + 68, by + 48], outline=couleur, width=4)
+            # Boîte englobante simulée autour d'une zone aléatoire de l'image
+            bx = random.randint(int(largeur * 0.15), int(largeur * 0.65))
+            by = random.randint(int(hauteur * 0.15), int(hauteur * 0.55))
+            bw, bh = int(largeur * 0.18), int(hauteur * 0.16)
+            draw.rectangle([bx, by, bx + bw, by + bh], outline=couleur, width=4)
             label = f"{classe} ({int(confiance * 100)}%)"
-            draw.rectangle([bx - 8, by - 30, bx - 8 + len(label) * 7, by - 8], fill=couleur)
-            draw.text((bx - 5, by - 28), label, fill=(255, 255, 255))
+            draw.rectangle([bx, by - 22, bx + len(label) * 7, by], fill=couleur)
+            draw.text((bx + 3, by - 20), label, fill=(255, 255, 255))
 
             resultat = {
                 "type_anomalie": type_anomalie,
@@ -89,7 +101,7 @@ class ModuleDetectionSimulation:
             }
         else:
             # Cadre vert = conforme
-            draw.rectangle([55, 55, self.largeur - 55, self.hauteur - 55], outline=COULEURS["conforme"], width=4)
+            draw.rectangle([8, 8, largeur - 8, hauteur - 8], outline=COULEURS["conforme"], width=4)
             resultat = None
 
         return img, resultat
@@ -126,6 +138,23 @@ class ModuleDetectionYOLO:
                             "confiance": round(float(box.conf[0]), 2)}
                 break
         return img, resultat
+
+    def analyser_image_fournie(self, img: Image.Image):
+        """Analyse réelle (YOLO) d'une photo fournie par la caméra du navigateur."""
+        import numpy as np
+        frame = self.cv2.cvtColor(np.array(img.convert("RGB")), self.cv2.COLOR_RGB2BGR)
+        resultats = self.model.predict(frame, conf=self.seuil_confiance, verbose=False)[0]
+        frame_annote = resultats.plot()
+        img_annotee = Image.fromarray(self.cv2.cvtColor(frame_annote, self.cv2.COLOR_BGR2RGB))
+
+        resultat = None
+        for box in resultats.boxes:
+            classe = self.model.names[int(box.cls[0])]
+            if classe.lower() != "conforme":
+                resultat = {"type_anomalie": "Qualité", "classe": classe,
+                            "confiance": round(float(box.conf[0]), 2)}
+                break
+        return img_annotee, resultat
 
     def liberer(self):
         self.camera.release()
