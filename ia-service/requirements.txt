@@ -3,5 +3,5 @@ uvicorn[standard]
 pillow
 
 # Décommenter une fois le modèle YOLO entraîné :
-# opencv-python
-# ultralytics
+ opencv-python
+ultralytics
