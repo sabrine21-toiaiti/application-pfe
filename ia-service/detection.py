@@ -140,10 +140,14 @@ class ModuleDetectionYOLO:
         return img, resultat
 
     def analyser_image_fournie(self, img: Image.Image):
-        """Analyse réelle (YOLO) d'une photo fournie par la caméra du navigateur."""
+        """Analyse réelle (YOLO) d'une photo fournie par la caméra du navigateur.
+        Image redimensionnée pour accélérer l'inférence CPU (plan gratuit sans GPU)."""
         import numpy as np
-        frame = self.cv2.cvtColor(np.array(img.convert("RGB")), self.cv2.COLOR_RGB2BGR)
-        resultats = self.model.predict(frame, conf=self.seuil_confiance, verbose=False)[0]
+        img_rgb = img.convert("RGB")
+        # Redimensionner si l'image est grande (les téléphones envoient des photos HD)
+        img_rgb.thumbnail((640, 640))
+        frame = self.cv2.cvtColor(np.array(img_rgb), self.cv2.COLOR_RGB2BGR)
+        resultats = self.model.predict(frame, conf=self.seuil_confiance, imgsz=416, verbose=False)[0]
         frame_annote = resultats.plot()
         img_annotee = Image.fromarray(self.cv2.cvtColor(frame_annote, self.cv2.COLOR_BGR2RGB))
 

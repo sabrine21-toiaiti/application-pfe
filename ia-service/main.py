@@ -24,6 +24,16 @@ app.add_middleware(
 
 detecteur = get_module_detection()
 
+# "Réchauffe" le modèle YOLO au démarrage du service (le premier appel PyTorch
+# est toujours plus lent) - évite que le tout premier utilisateur subisse ce délai.
+if modele_reel_disponible():
+    try:
+        _img_test = Image.new("RGB", (416, 416), (128, 128, 128))
+        detecteur.analyser_image_fournie(_img_test)
+        print("Modèle YOLO réchauffé avec succès.")
+    except Exception as _e:
+        print(f"Avertissement : échec du réchauffement du modèle ({_e})")
+
 
 class AnomalieDetectee(BaseModel):
     type_anomalie: str
