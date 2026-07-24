@@ -2,7 +2,5 @@ fastapi
 uvicorn[standard]
 pillow
 python-multipart
-
-# Décommenter une fois le modèle YOLO entraîné :
-opencv-python
+opencv-python-headless
 ultralytics
